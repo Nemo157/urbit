@@ -17,7 +17,7 @@
 #include <stdint.h>
 #include <uv.h>
 #include <termios.h>
-#include <term.h>
+//#include <term.h>
 #include <errno.h>
 #include <libgen.h>
 #include <ftw.h>
@@ -1010,7 +1010,7 @@ _unix_initial_update_file(c3_c* pax_c)
     return u3_nul;
   }
   else {
-    u3_noun pax = _unix_string_to_path_helper(pax_c + strlen(U3_LIB) + 5);
+    u3_noun pax = _unix_string_to_path_helper(pax_c + strlen(u3_Host.urb_lib) + 5);
     u3_noun mim = u3nt(c3__text, u3i_string("plain"), u3_nul);
     u3_noun dat = u3nt(mim, len_ws, u3i_bytes(len_ws, dat_y));
 
@@ -1397,6 +1397,8 @@ u3_unix_acquire(c3_c* pax_c)
     fcntl(fid_i, F_FULLFSYNC);
 #elif defined(U3_OS_bsd)
     fsync(fid_i);
+#elif defined(U3_OS_ios)
+    fcntl(fid_i, F_FULLFSYNC);
 #else
 #   error "port: datasync"
 #endif
@@ -1445,7 +1447,7 @@ u3_unix_ef_move(void)
 void
 u3_unix_ef_initial_into()
 {
-  c3_c* pax_c = _unix_down(U3_LIB, "zod");
+  c3_c* pax_c = _unix_down(u3_Host.urb_lib, "zod");
   u3_noun can = _unix_initial_update_dir(pax_c);
   free(pax_c);
 

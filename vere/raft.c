@@ -1929,8 +1929,6 @@ _raft_grab(u3_noun ova)
   }
 }
 
-int FOO;
-
 /* u3_raft_work(): work.
 */
 void

@@ -13,15 +13,16 @@
 #include <stdint.h>
 #include <uv.h>
 #include <sigsegv.h>
-#include <curses.h>
+//#include <curses.h>
 #include <termios.h>
-#include <term.h>
+//#include <term.h>
 #include <dirent.h>
 
 #define U3_GLOBAL
-#define C3_GLOBAL
+#define c3_global
 #include "all.h"
 #include "vere/vere.h"
+
 
 /* _main_readw(): parse a word from a string.
 */
@@ -188,6 +189,8 @@ _main_getopt(c3_i argc, c3_c** argv)
       }
     }
   }
+  
+  u3_Host.urb_lib = U3_LIB;
 
   if ( argc != (optind + 1) ) {
     return u3_Host.dir_c ? c3y : c3n;
@@ -249,7 +252,7 @@ static void
 u3_ve_sysopt()
 {
   u3_Local = strdup(u3_Host.dir_c);
-  u3_System = U3_LIB;
+  u3_System = strdup(u3_Host.urb_lib);
 }
 
 #if 0
@@ -273,7 +276,7 @@ static void
 overflow_handler(int emergency, stackoverflow_context_t scp)
 {
   if ( 1 == emergency ) {
-    write(2, "stack emergency\n", strlen("stack emergency" + 2));
+    printf("stack emergency\n");
     exit(1);
   } else {
     Sigcause = sig_overflow;
@@ -329,7 +332,7 @@ interrupt_handler(int x)
 #define GRAB
 
 c3_i
-main(c3_i   argc,
+main2(c3_i   argc,
      c3_c** argv)
 {
   //  Parse options.
@@ -406,7 +409,7 @@ main(c3_i   argc,
         u3C.wag_w |= u3o_dryrun;
       }
     }
-    u3m_boot(u3_Host.ops_u.nuu, u3_Host.ops_u.gab, u3_Host.dir_c);
+    u3m_boot(u3_Host.ops_u.nuu, u3_Host.ops_u.gab, u3_Host.dir_c, u3_Host.urb_lib);
 
     /*  Start Arvo.
     */
@@ -436,5 +439,175 @@ main(c3_i   argc,
   //
   u3_lo_loop();
 
+  return 0;
+}
+
+struct stealer {
+  int pifd;
+  int outfd;
+  void (*printflog)(char *);
+};
+
+void * new_stealer(void *a) {
+  struct stealer *arg = (struct stealer *)a;
+  ssize_t len;
+  char buff[2048];
+  while (0 < (len = read(arg->pifd, buff, 2047))) {
+    buff[len] = 0;
+    arg->printflog(buff);
+    write(arg->outfd, buff, len);
+  }
+  
+  int *result = calloc(1, sizeof(int));
+  result = 0;
+  return result;
+}
+
+void stealfd(int fd, void (*printflog)(char *)) {
+  int new_fd = dup(fd);
+  
+  int pi[2];
+  if ( 0 != pipe(pi)) {
+    perror("failed to open pipe for stealing fd");
+  }
+  
+  struct stealer *arg = calloc(1, sizeof(struct stealer));
+  arg->pifd = pi[0];
+  arg->outfd = new_fd;
+  arg->printflog = printflog;
+  
+  pthread_t stealer;
+  if (0 != pthread_create(&stealer, NULL, &new_stealer, arg)) {
+    perror("failed to start fd stealer");
+  }
+  
+  if (-1 == dup2(pi[1], fd)) {
+    perror("failed to steal fd");
+  }
+}
+
+int
+main3(const char *root_directory, const char *urb_lib, void (*printflog)(char *), void (*printferr)(char *))
+{
+  stealfd(1, printflog);
+  stealfd(2, printferr);
+  
+  if (strnlen(root_directory, 2001) > 2000) {
+    printf("root directory too big");
+    return -1;
+  }
+  
+  char directory_buffer[2048];
+  
+  char *next = stpncpy(directory_buffer, root_directory, 2048);
+  stpncpy(next, "/fake_zod", 2048 - (next - directory_buffer));
+  
+  u3_Host.ops_u.abo = c3n;
+  u3_Host.ops_u.bat = c3n;
+  u3_Host.ops_u.gab = c3n;
+  u3_Host.ops_u.loh = c3n;
+  u3_Host.ops_u.dem = c3n;
+  u3_Host.ops_u.fog = c3n;
+  u3_Host.ops_u.fak = c3n;
+  u3_Host.ops_u.pro = c3n;
+  u3_Host.ops_u.dry = c3n;
+  u3_Host.ops_u.veb = c3n;
+  u3_Host.ops_u.qui = c3n;
+  u3_Host.ops_u.nuu = c3n;
+  u3_Host.ops_u.mem = c3n;
+  u3_Host.ops_u.kno_w = DefaultKernel;
+  
+  u3_Host.ops_u.nam_c = "the_host";
+  
+  u3_Host.ops_u.imp_c = "~zod";
+  
+  u3_Host.ops_u.dem = c3y;
+  u3_Host.ops_u.loh = c3y;
+  u3_Host.ops_u.fak = c3y;
+  
+  u3_Host.ops_u.nuu = c3y;
+  
+  u3_Host.dir_c = directory_buffer;
+  u3_Host.urb_lib = (char *)urb_lib;
+  
+  u3_Local = strdup(u3_Host.dir_c);
+  u3_System = strdup(u3_Host.urb_lib);
+  
+  
+  struct stat s;
+  if (!stat(u3_Host.dir_c, &s)) {
+    // u3_Host.ops_u.nuu = c3n;
+  }
+  
+  printf("~\n");
+  //  printf("welcome.\n");
+  printf("urbit: home is %s\n", u3_Host.dir_c);
+  // printf("vere: hostname is %s\n", u3_Host.ops_u.nam_c);
+  
+  if ( c3y == u3_Host.ops_u.dem && c3n == u3_Host.ops_u.bat ) {
+    printf("urbit: running as daemon\n");
+  }
+  
+  //  Seed prng. Don't panic -- just for fuzz testing.
+  //
+  srand(getpid());
+  
+  //  Instantiate process globals.
+  {
+    /*  Boot the image and checkpoint.  Set flags.
+     */
+    {
+      /*  Set pier directory.
+       */
+      u3C.dir_c = u3_Host.dir_c;
+      
+      /*  Set GC flag.
+       */
+      if ( _(u3_Host.ops_u.gab) ) {
+        u3C.wag_w |= u3o_debug_ram;
+      }
+      
+      /*  Set profile flag.
+       */
+      if ( _(u3_Host.ops_u.pro) ) {
+        u3C.wag_w |= u3o_debug_cpu;
+      }
+      
+      /*  Set verbose flag.
+       */
+      if ( _(u3_Host.ops_u.veb) ) {
+        u3C.wag_w |= u3o_verbose;
+      }
+      
+      /*  Set quiet flag.
+       */
+      if ( _(u3_Host.ops_u.qui) ) {
+        u3C.wag_w |= u3o_quiet;
+      }
+      
+      /*  Set dry-run flag.
+       */
+      if ( _(u3_Host.ops_u.dry) ) {
+        u3C.wag_w |= u3o_dryrun;
+      }
+    }
+    
+    u3m_boot(u3_Host.ops_u.nuu, u3_Host.ops_u.gab, u3_Host.dir_c, u3_Host.urb_lib);
+    
+    /*  Start Arvo.
+     */
+    {
+      struct timeval tim_tv;
+      u3_noun        now;
+      
+      gettimeofday(&tim_tv, 0);
+      now = u3_time_in_tv(&tim_tv);
+      
+      u3v_start(now);
+    }
+  }
+  
+  u3_lo_loop();
+  
   return 0;
 }

@@ -20,6 +20,10 @@
 #define DEVRANDOM "/dev/random"
 #endif
 
+#if defined(U3_OS_ios)
+#include <spawn.h>
+#endif
+
 
 /* u3_sist_pack(): write a blob to disk, transferring.
 */
@@ -82,6 +86,8 @@ u3_sist_pack(c3_w tem_w, c3_w typ_w, c3_w* bob_w, c3_w len_w)
     fcntl(lug_u->fid_i, F_FULLFSYNC);
 #elif defined(U3_OS_bsd)
     fsync(lug_u->fid_i);
+#elif defined(U3_OS_ios)
+    fcntl(lug_u->fid_i, F_FULLFSYNC);
 #else
 #   error "port: datasync"
 #endif
@@ -290,19 +296,19 @@ _sist_home()
     mkdir(ful_c, 0700);
 
     snprintf(ful_c, 2048, "%s/.urb/get", u3_Host.dir_c);
-    if ( 0 != mkdir(ful_c, 0700) ) {
+    if ( 0 != mkdir(ful_c, 0700) && errno != EEXIST ) {
       perror(ful_c);
       u3_lo_bail();
     }
 
     snprintf(ful_c, 2048, "%s/.urb/put", u3_Host.dir_c);
-    if ( 0 != mkdir(ful_c, 0700) ) {
+    if ( 0 != mkdir(ful_c, 0700) && errno != EEXIST ) {
       perror(ful_c);
       u3_lo_bail();
     }
 
     snprintf(ful_c, 2048, "%s/.urb/sis", u3_Host.dir_c);
-    if ( 0 != mkdir(ful_c, 0700) ) {
+    if ( 0 != mkdir(ful_c, 0700) && errno != EEXIST ) {
       perror(ful_c);
       u3_lo_bail();
     }
@@ -311,13 +317,55 @@ _sist_home()
   //  Copy urbit.pill.
   //
   {
-    snprintf(ful_c, 2048, "cp %s/urbit.pill %s/.urb",
-                    U3_LIB, u3_Host.dir_c);
+#if defined(U3_OS_ios)
+    char source_c[2048];
+    char dest_c[2048];
+    
+    snprintf(source_c, 2048, "%s/urbit.pill", u3_Host.urb_lib);
+    snprintf(dest_c, 2048, "%s/.urb/urbit.pill", u3_Host.dir_c);
+    
+    printf("copying %s to %s\r\n", source_c, dest_c);
+    
+    int source;
+    if (-1 == (source = open(source_c, O_RDONLY))) {
+      perror("could not open source pill");
+      exit(1);
+    }
+    
+    int dest;
+    if (-1 == (dest = open(dest_c, O_WRONLY | O_CREAT | O_TRUNC))) {
+      perror("could not open dest pill");
+      exit(1);
+    }
+    
+    ssize_t len;
+    char buff[2048];
+    while (0 < (len = read(source, buff, 2048))) {
+      ssize_t written = write(dest, buff, len);
+      if (-1 == written) {
+        perror("could not write dest pill");
+        exit(1);
+      } else if (written != len) {
+        printf("did not write all bytes to dest pill\n");
+        exit(1);
+      }
+    }
+    if (len == -1) {
+      perror("could not read source pill");
+      exit(1);
+    }
+    
+    close(source);
+    close(dest);
+#else
+    snprintf(ful_c, 2048, "cp %s/urbit.pill %s/.urb/urbit.pill",
+             u3_Host.urb_lib, u3_Host.dir_c);
     printf("%s\r\n", ful_c);
     if ( 0 != system(ful_c) ) {
       uL(fprintf(uH, "could not %s\n", ful_c));
       u3_lo_bail();
     }
+#endif
   }
 
 #if 1

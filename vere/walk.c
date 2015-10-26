@@ -13,9 +13,9 @@
 #include <dirent.h>
 #include <stdint.h>
 #include <uv.h>
-#include <curses.h>
+//#include <curses.h>
 #include <termios.h>
-#include <term.h>
+//#include <term.h>
 #include <errno.h>
 
 #include "all.h"

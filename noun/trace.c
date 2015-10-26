@@ -382,6 +382,30 @@ u3t_boot(void)
     }
 #elif defined(U3_OS_bsd)
     // TODO: support profiling on bsd
+#elif defined(U3_OS_ios)
+    {
+      struct itimerval itm_v;
+      struct sigaction sig_s;
+      sigset_t set;
+      
+      sig_s.__sigaction_u.__sa_handler = _ct_sigaction;
+      sig_s.sa_mask = 0;
+      sig_s.sa_flags = 0;
+      sigaction(SIGPROF, &sig_s, 0);
+      
+      sigemptyset(&set);
+      sigaddset(&set, SIGPROF);
+      if ( 0 != pthread_sigmask(SIG_UNBLOCK, &set, NULL) ) {
+        perror("pthread_sigmask");
+      }
+      
+      itm_v.it_interval.tv_sec = 0;
+      itm_v.it_interval.tv_usec = 10000;
+      // itm_v.it_interval.tv_usec = 100000;
+      itm_v.it_value = itm_v.it_interval;
+      
+      setitimer(ITIMER_PROF, &itm_v, 0);
+    }
 #else
 #   error "port: profiling"
 #endif
@@ -416,6 +440,23 @@ u3t_boff(void)
     // TODO: support profiling on linux
 #elif defined(U3_OS_bsd)
     // TODO: support profiling on bsd
+#elif defined(U3_OS_ios)
+    struct sigaction sig_s;
+    struct itimerval itm_v;
+    sigset_t set;
+    
+    sigemptyset(&set);
+    sigaddset(&set, SIGPROF);
+    if ( 0 != pthread_sigmask(SIG_BLOCK, &set, NULL) ) {
+      perror("pthread_sigmask");
+    }
+    
+    itm_v.it_interval.tv_sec = 0;
+    itm_v.it_interval.tv_usec = 0;
+    itm_v.it_value = itm_v.it_interval;
+    
+    setitimer(ITIMER_PROF, &itm_v, 0);
+    sigaction(SIGPROF, &sig_s, 0);
 #else
 #   error "port: profiling"
 #endif

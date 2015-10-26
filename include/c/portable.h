@@ -65,6 +65,22 @@
 #     include <sys/resource.h>
 #     include <sys/mman.h>
 
+#   elif defined(U3_OS_ios)
+#     include <inttypes.h>
+#     include <stdlib.h>
+#     include <string.h>
+#     include <stdarg.h>
+#     include <unistd.h>
+#     include <stdint.h>
+#     include <assert.h>
+#     include <setjmp.h>
+#     include <signal.h>
+#     include <machine/endian.h>
+#     include <stdio.h>
+#     include <sys/time.h>
+#     include <sys/resource.h>
+#     include <sys/mman.h>
+
 #   else
       #error "port: headers"
 
@@ -89,6 +105,13 @@
 #     define U3_OS_LoomBase 0x4000000
 #   endif
 #     define U3_OS_LoomBits 29            //  ie, 2^29 words == 2GB
+# elif defined(U3_OS_ios)
+#   ifdef __LP64__
+#     define U3_OS_LoomBase 0x12e000000
+#   else
+#     define U3_OS_LoomBase 0x4000000
+#   endif
+#     define U3_OS_LoomBits 27            //  ie, 2^27 words == 2GB
 # else
 #   error "port: LoomBase"
 # endif
@@ -98,7 +121,7 @@
   *** To instantiate globals, #define c3_global as extern.
   **/
 #   ifndef c3_global
-#     define c3_global
+#     define c3_global extern
 #   endif
 
 
@@ -140,6 +163,12 @@
 #        define c3_bswap_16(x)  NXSwapShort(x)
 #        define c3_bswap_32(x)  NXSwapInt(x)
 #        define c3_bswap_64(x)  NXSwapLongLong(x)
+
+#      elif defined(U3_OS_ios)
+#        define c3_bswap_16(x)  NXSwapShort(x)
+#        define c3_bswap_32(x)  NXSwapInt(x)
+#        define c3_bswap_64(x)  NXSwapLongLong(x)
+
 #      else
 #        error "port: byte swap"
 #      endif
@@ -152,6 +181,8 @@
 #        define c3_sync(fd) (fcntl(fd, F_FULLFSYNC, 0))
 #      elif defined(U3_OS_bsd)
 #        define c3_sync(fd) (fsync(fd))
+#      elif defined(U3_OS_ios)
+#        define c3_sync(fd) (fcntl(fd, F_FULLFSYNC, 0))
 #      else
 #        error "port: sync"
 #      endif
@@ -161,7 +192,7 @@
 #      if defined(U3_OS_linux)
 #        include <stdio_ext.h>
 #        define c3_fpurge __fpurge
-#      elif defined(U3_OS_bsd) || defined(U3_OS_osx)
+#      elif defined(U3_OS_bsd) || defined(U3_OS_osx) || defined(U3_OS_ios)
 #        define c3_fpurge fpurge
 #      else
 #        error "port: fpurge"
@@ -176,6 +207,9 @@
 #        define lseek64 lseek
 #      elif defined(U3_OS_bsd)
 #        define c3_stat_mtime(dp) (u3_time_in_ts(&((dp)->st_mtim)))
+#        define lseek64 lseek
+#      elif defined(U3_OS_ios)
+#        define c3_stat_mtime(dp) (u3_time_in_ts(&((dp)->st_mtimespec)))
 #        define lseek64 lseek
 #      else
 #        error "port: timeconvert"

@@ -16,9 +16,9 @@
 #include <netinet/in.h>
 #include <uv.h>
 #include <errno.h>
-#include <curses.h>
+//#include <curses.h>
 #include <termios.h>
-#include <term.h>
+//#include <term.h>
 
 #include "all.h"
 #include "vere/vere.h"

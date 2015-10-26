@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <dirent.h>
 
 #include "all.h"
 
@@ -166,7 +167,7 @@ _ce_image_open(u3e_image* img_u, c3_o nuu_o)
 
   snprintf(ful_c, 8192, "%s", u3P.dir_c);
   mkdir(ful_c, 0700);
-
+  
   snprintf(ful_c, 8192, "%s/.urb", u3P.dir_c);
   mkdir(ful_c, 0700);
 
@@ -592,6 +593,8 @@ _ce_sync(c3_i fid_i)
   fcntl(fid_i, F_FULLFSYNC);
 #elif defined(U3_OS_bsd)
   fsync(fid_i);
+#elif defined(U3_OS_ios)
+  fcntl(fid_i, F_FULLFSYNC);
 #else
 # error "port: datasync"
 #endif
@@ -809,6 +812,34 @@ u3e_save(void)
   _ce_patch_free(pat_u);
 }
 
+int rmdir_p(char *path) {
+  DIR *dirp;
+  struct dirent *dp;
+  if ( NULL == (dirp = opendir(path)) ) {
+
+    perror("could not open directory");
+    exit(1);
+  }
+  
+  while ( NULL != (dp = readdir(dirp)) ) {
+    if (strncmp(".", dp->d_name, 2) == 0 || strncmp("..", dp->d_name, 3) == 0) {
+      continue;
+    }
+    char subpath[20480];
+    snprintf(subpath, 20480, "%s/%s", path, dp->d_name);
+    if (dp->d_type == DT_DIR) {
+      rmdir_p(subpath);
+    } else if (dp->d_type == DT_REG) {
+      unlink(subpath);
+    } else {
+      printf("could not handle unknown file type %d for %s\n", dp->d_type, subpath);
+      exit(1);
+    }
+  }
+  closedir(dirp);
+  return c3y;
+}
+
 /* u3e_live(): start the persistence system.
 */
 c3_o
@@ -827,6 +858,10 @@ u3e_live(c3_o nuu_o, c3_c* dir_c)
     /* Open and apply any patches.
     */
     if ( _(nuu_o) ) {
+      struct stat s;
+      if (0 == stat(dir_c, &s)) {
+        rmdir_p(dir_c);
+      }
       if ( (c3n == _ce_image_open(&u3P.nor_u, c3y)) ||
            (c3n == _ce_image_open(&u3P.sou_u, c3y)) )
       {

@@ -3,9 +3,6 @@
 */
 #include "all.h"
 
-
-int FOO;
-
 /* logic
 */
   static u3_noun
@@ -626,19 +623,7 @@ int FOO;
         u3_noun hif = _mint_nice(van, gol, huz);
         u3_noun zel = _mint_in(van, sut, hif, q_gen);
         u3_noun ret = u3nc(hif, u3k(u3t(zel)));
-
-#if 0
-        {
-          u3_noun goz = u3qfu_play(van, sut, q_gen);
-          u3_noun bar;
-
-          FOO = 1;
-          fprintf(stderr, "\r\n");
-          bar = u3qfu_nest(van, huz, c3n, goz);
-          fprintf(stderr, "kthx: bar %d\r\n", bar);
-          FOO = 0;
-        }
-#endif
+        
         u3z(zel);
         return ret;
       }

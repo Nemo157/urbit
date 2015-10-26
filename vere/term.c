@@ -14,9 +14,9 @@
 #include <netinet/in.h>
 #include <uv.h>
 #include <errno.h>
-#include <curses.h>
+//#include <curses.h>
 #include <termios.h>
-#include <term.h>
+//#include <term.h>
 #include <anachronism/common.h>
 #include <anachronism/nvt.h>
 #include "all.h"
@@ -114,9 +114,11 @@ u3_term_io_init()
     //  Configure horrible stateful terminfo api.
     //
     {
+#if !defined(U3_OS_ios)
       if ( 0 != setupterm(0, 2, 0) ) {
         c3_assert(!"init-setupterm");
       }
+#endif
     }
 
     //  Load terminfo strings.
@@ -126,7 +128,7 @@ u3_term_io_init()
 
 #   define _utfo(way, nam) \
       { \
-        uty_u->ufo_u.way.nam##_y = (const c3_y *) tigetstr(#nam); \
+        /*uty_u->ufo_u.way.nam##_y = (const c3_y *) tigetstr(#nam);*/ \
         c3_assert(uty_u->ufo_u.way.nam##_y); \
       }
 

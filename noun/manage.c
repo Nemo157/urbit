@@ -102,7 +102,6 @@ _cm_emergency(c3_c* cap_c, c3_l sig_l)
 {
   write(2, "\r\n", 2);
   write(2, cap_c, strlen(cap_c));
-
   if ( sig_l ) {
     write(2, ": ", 2);
     write(2, &sig_l, 4);
@@ -270,9 +269,9 @@ _cm_signal_recover(c3_l sig_l, u3_noun arg)
       rod_u = u3R;
  
       while ( rod_u->kid_p ) {
-#if 0
+#if 1
         fprintf(stderr, "collecting %d frames\r\n", 
-              u3kb_lent((u3to(u3_road, rod_u->kid_p)->bug.tax));
+              u3kb_lent((u3to(u3_road, rod_u->kid_p)->bug.tax)));
 #endif
         tax = u3kb_weld(_cm_stack_recover(u3to(u3_road, rod_u->kid_p)), tax);
         rod_u = u3to(u3_road, rod_u->kid_p);
@@ -411,11 +410,11 @@ _pave_north(c3_w* mem_w, c3_w siz_w, c3_w len_w)
   // memset(mem_w, 0, 4 * len_w);     // enable in case of corruption
   memset(rod_u, 0, 4 * siz_w);
 
-  rod_u->rut_p = u3of(c3_w, rut_w);
-  rod_u->hat_p = u3of(c3_w, hat_w);
+  rod_u->rut_p = (u3_post)u3of(c3_w, rut_w);
+  rod_u->hat_p = (u3_post)u3of(c3_w, hat_w);
  
-  rod_u->mat_p = u3of(c3_w, mat_w);
-  rod_u->cap_p = u3of(c3_w, cap_w);
+  rod_u->mat_p = (u3_post)u3of(c3_w, mat_w);
+  rod_u->cap_p = (u3_post)u3of(c3_w, cap_w);
   
   return rod_u;
 }
@@ -1410,8 +1409,8 @@ static void
 _cm_signals(void)
 {
   if ( 0 != sigsegv_install_handler(u3e_fault) ) {
-    fprintf(stderr, "sigsegv install failed\n");
-    exit(1);
+    printf("sigsegv install failed\n");
+    //exit(1);
   }
   // signal(SIGINT, _loom_stop);
 
@@ -1452,7 +1451,7 @@ _cm_init(c3_o chk_o)
 
     map_v = mmap((void *)u3_Loom,
                  len_w,
-                 _(chk_o) ? PROT_READ : (PROT_READ | PROT_WRITE),
+                 _(chk_o) ? PROT_READ | PROT_WRITE : (PROT_READ | PROT_WRITE),
                  (MAP_ANON | MAP_FIXED | MAP_PRIVATE),
                  -1, 0);
 
@@ -1477,7 +1476,7 @@ _cm_init(c3_o chk_o)
 /* u3m_boot(): start the u3 system.
 */
 void
-u3m_boot(c3_o nuu_o, c3_o bug_o, c3_c* dir_c)
+u3m_boot(c3_o nuu_o, c3_o bug_o, c3_c* dir_c, c3_c* urb_lib)
 {
   /* Activate the loom.
   */
@@ -1507,7 +1506,11 @@ u3m_boot(c3_o nuu_o, c3_o bug_o, c3_c* dir_c)
 
     snprintf(pas_c, 2048, "%s/.urb/urbit.pill", dir_c);
     if ( -1 == stat(pas_c, &buf_u) ) {
-      snprintf(pas_c, 2048, "%s/urbit.pill", U3_LIB);
+      snprintf(pas_c, 2048, "%s/urbit.pill", urb_lib);
+    }
+    if ( -1 == stat(pas_c, &buf_u) ) {
+      printf("couldn't find pill to load\r\n");
+      exit(1);
     }
     printf("boot: loading %s\r\n", pas_c);
     u3v_make(pas_c);

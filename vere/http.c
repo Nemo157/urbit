@@ -14,9 +14,9 @@
 #include <netinet/in.h>
 #include <uv.h>
 #include <errno.h>
-#include <curses.h>
+//#include <curses.h>
 #include <termios.h>
-#include <term.h>
+//#include <term.h>
 
 #include "../outside/jhttp/http_parser.h"   // Joyent HTTP
 #include "all.h"

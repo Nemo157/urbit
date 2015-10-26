@@ -20,9 +20,9 @@
 
   /**  Constants.
   **/
-    /* u3a_bits: number of bits in word-addressed pointer.  29 == 2GB.
+    /* u3a_bits: number of bits in word-addressed pointer.  27 == 512MB.
     */
-#     define u3a_bits  29
+#     define u3a_bits  27
 
     /* u3a_page: number of bits in word-addressed page.  12 == 16Kbyte page.
     */
@@ -213,7 +213,7 @@
            : u3m_bail(c3__exit) )
 
 #     define  u3a_into(x) ((void *)(u3_Loom + (x)))
-#     define  u3a_outa(p) (((c3_w*)(void*)(p)) - u3_Loom)
+#     define  u3a_outa(p) (((c3_w *)(void *)(p)) - u3_Loom)
 
 #     define  u3a_is_north(r)  __(r->cap_p > r->hat_p)
 #     define  u3a_is_south(r)  !u3a_is_north(r)
