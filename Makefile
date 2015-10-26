@@ -49,7 +49,7 @@ CLD=c++ -O3 -L/usr/local/lib -L/opt/local/lib
 endif
 
 ifeq ($(OS),osx)
-  COSFLAGS=-fno-diagnostics-fixit-info
+  COSFLAGS=-fno-diagnostics-fixit-info -I/usr/local/opt/openssl/include
   CLDOSFLAGS=-bind_at_load
   OSLIBS=-framework CoreServices -framework CoreFoundation
 endif
@@ -475,3 +475,5 @@ distclean: clean $(LIBUV_MAKEFILE)
 	$(MAKE) -C outside/softfloat-3/build/Linux-386-GCC clean
 
 .PHONY: clean debbuild debinstalldistclean etags osxpackage tags
+
+-include Makefile.ios

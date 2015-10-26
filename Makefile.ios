@@ -1,0 +1,164 @@
+LIBUV_FAT=iOS/libs/libuv.a
+LIBUV_arm64=iOS/libs/arm64/libuv.a
+LIBUV_x86_64=iOS/libs/x86_64/libuv.a
+
+LIBRE2_FAT=iOS/libs/libre2.a
+LIBRE2_arm64=iOS/libs/arm64/libre2.a
+LIBRE2_x86_64=iOS/libs/x86_64/libre2.a
+
+LIBED25519_FAT=iOS/libs/libed25519.a
+LIBED25519_arm64=iOS/libs/arm64/libed25519.a
+LIBED25519_x86_64=iOS/libs/x86_64/libed25519.a
+
+LIBANACHRONISM_FAT=iOS/libs/libanachronism.a
+LIBANACHRONISM_arm64=iOS/libs/arm64/libanachronism.a
+LIBANACHRONISM_x86_64=iOS/libs/x86_64/libanachronism.a
+
+LIBCOMMONMARK_FAT=iOS/libs/libcommonmark.a
+LIBCOMMONMARK_arm64=iOS/libs/arm64/libcommonmark.a
+LIBCOMMONMARK_x86_64=iOS/libs/x86_64/libcommonmark.a
+
+LIBSCRYPT_FAT=iOS/libs/libscrypt.a
+LIBSCRYPT_arm64=iOS/libs/arm64/libscrypt.a
+LIBSCRYPT_x86_64=iOS/libs/x86_64/libscrypt.a
+
+LIBSOFTFLOAT_arm64_in=outside/softfloat-3/build/iOS-arm64-clang/softfloat.a
+LIBSOFTFLOAT_x86_64_in=outside/softfloat-3/build/iOS-x86_64-clang/softfloat.a
+
+LIBSOFTFLOAT_FAT=iOS/libs/libsoftfloat.a
+LIBSOFTFLOAT_arm64=iOS/libs/arm64/libsoftfloat.a
+LIBSOFTFLOAT_x86_64=iOS/libs/x86_64/libsoftfloat.a
+
+LIBGMP=outside/gmp/.libs/libgmp.a
+LIBGMP_FAT=iOS/libs/libgmp.a
+LIBGMP_arm64=iOS/libs/arm64/libgmp.a
+LIBGMP_x86_64=iOS/libs/x86_64/libgmp.a
+
+LIBSIGSEGV=outside/sigsegv/src/.libs/libsigsegv.a
+LIBSIGSEGV_FAT=iOS/libs/libsigsegv.a
+LIBSIGSEGV_arm64=iOS/libs/arm64/libsigsegv.a
+LIBSIGSEGV_x86_64=iOS/libs/x86_64/libsigsegv.a
+
+IOS_LIBS=$(LIBUV_FAT) $(LIBRE2_FAT) $(LIBED25519_FAT) $(LIBANACHRONISM_FAT) $(LIBCOMMONMARK_FAT) $(LIBSCRYPT_FAT) $(LIBSOFTFLOAT_FAT) $(LIBGMP_FAT) $(LIBSIGSEGV_FAT)
+
+CFLAGS_x86_64=-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk -mios-simulator-version-min=9.0
+CFLAGS_arm64=-arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -mios-version-min=9.0 -fembed-bitcode
+
+iOS/libs/%.a: iOS/libs/x86_64/%.a iOS/libs/arm64/%.a
+	lipo iOS/libs/x86_64/$*.a iOS/libs/arm64/$*.a -create -output $@
+
+$(LIBUV_arm64):
+	-mkdir -p iOS/libs/arm64
+	-$(MAKE) -C outside/libuv_0.11 clean
+	cd outside/libuv_0.11 ; sh autogen.sh ; ./configure --disable-dtrace CC=clang CFLAGS="$(CFLAGS_arm64)" --host=arm-apple-darwin15.0.0
+	$(MAKE) -C outside/libuv_0.11 all-am -j1
+	cp $(LIBUV) $@
+
+$(LIBUV_x86_64):
+	-mkdir -p iOS/libs/x86_64
+	-$(MAKE) -C outside/libuv_0.11 clean
+	cd outside/libuv_0.11 ; sh autogen.sh ; ./configure --disable-dtrace CC=clang CFLAGS="$(CFLAGS_x86_64)"
+	$(MAKE) -C outside/libuv_0.11 all-am -j1
+	cp $(LIBUV) $@
+
+$(LIBGMP_arm64):
+	-mkdir -p iOS/libs/arm64
+	-$(MAKE) -C outside/gmp distclean
+	cd outside/gmp ; ./configure CC=clang CFLAGS="$(CFLAGS_arm64)" --host=arm-apple-darwin15.0.0 --disable-shared --enable-static --disable-assembly
+	$(MAKE) -C outside/gmp
+	cp $(LIBGMP) $@
+
+$(LIBGMP_x86_64):
+	-mkdir -p iOS/libs/x86_64
+	-$(MAKE) -C outside/gmp distclean
+	cd outside/gmp ; ./configure CC=clang CFLAGS="$(CFLAGS_x86_64)" --disable-shared --enable-static --disable-assembly
+	$(MAKE) -C outside/gmp
+	cp $(LIBGMP) $@
+
+$(LIBRE2_arm64):
+	-mkdir -p iOS/libs/arm64
+	-$(MAKE) -C outside/re2 clean
+	CXXFLAGS="$(CFLAGS_arm64) -Wall -O3 -g -pthread" $(MAKE) -C outside/re2 obj/libre2.a
+	cp $(LIBRE2) $@
+
+$(LIBRE2_x86_64):
+	-mkdir -p iOS/libs/x86_64
+	-$(MAKE) -C outside/re2 clean
+	CXXFLAGS="$(CFLAGS_x86_64) -Wall -O3 -g -pthread" $(MAKE) -C outside/re2 obj/libre2.a
+	cp $(LIBRE2) $@
+
+$(LIBED25519_arm64):
+	-mkdir -p iOS/libs/arm64
+	-$(MAKE) -C outside/ed25519 clean
+	$(MAKE) -C outside/ed25519 CFLAGS="$(CFLAGS_arm64) -O2 -g -Wall"
+	cp $(LIBED25519) $@
+
+$(LIBED25519_x86_64):
+	-mkdir -p iOS/libs/x86_64
+	-$(MAKE) -C outside/ed25519 clean
+	$(MAKE) -C outside/ed25519 CFLAGS="$(CFLAGS_x86_64) -O2 -g -Wall"
+	cp $(LIBED25519) $@
+
+$(LIBANACHRONISM_arm64):
+	-mkdir -p iOS/libs/arm64
+	-$(MAKE) -C outside/anachronism distclean
+	$(MAKE) -C outside/anachronism CFLAGS="$(CFLAGS_arm64) --pedantic -Wall -Wextra -std=gnu99" static
+	cp $(LIBANACHRONISM) $@
+
+$(LIBANACHRONISM_x86_64):
+	-mkdir -p iOS/libs/x86_64
+	-$(MAKE) -C outside/anachronism distclean
+	$(MAKE) -C outside/anachronism CFLAGS="$(CFLAGS_x86_64) --pedantic -Wall -Wextra -std=gnu99" static
+	cp $(LIBANACHRONISM) $@
+
+$(LIBCOMMONMARK_arm64):
+	-mkdir -p iOS/libs/arm64
+	-$(MAKE) -C outside/commonmark distclean
+	$(MAKE) -C outside/commonmark CFLAGS="$(CFLAGS_arm64)"
+	cp $(LIBCOMMONMARK) $@
+
+$(LIBCOMMONMARK_x86_64):
+	-mkdir -p iOS/libs/x86_64
+	-$(MAKE) -C outside/commonmark distclean
+	$(MAKE) -C outside/commonmark CFLAGS="$(CFLAGS_x86_64)"
+	cp $(LIBCOMMONMARK) $@
+
+$(LIBSCRYPT_arm64):
+	-mkdir -p iOS/libs/arm64
+	-$(MAKE) -C outside/scrypt clean
+	$(MAKE) -C outside/scrypt CFLAGS="$(CFLAGS_arm64)"
+	cp $(LIBSCRYPT) $@
+
+$(LIBSCRYPT_x86_64):
+	-mkdir -p iOS/libs/x86_64
+	-$(MAKE) -C outside/scrypt clean
+	$(MAKE) -C outside/scrypt CFLAGS="$(CFLAGS_x86_64)"
+	cp $(LIBSCRYPT) $@
+
+$(LIBSOFTFLOAT_arm64):
+	-mkdir -p iOS/libs/arm64
+	$(MAKE) -C outside/softfloat-3/build/iOS-arm64-clang
+	cp $(LIBSOFTFLOAT_arm64_in) $@
+
+$(LIBSOFTFLOAT_x86_64):
+	-mkdir -p iOS/libs/x86_64
+	$(MAKE) -C outside/softfloat-3/build/iOS-x86_64-clang
+	cp $(LIBSOFTFLOAT_x86_64_in) $@
+
+$(LIBSIGSEGV_arm64):
+	-mkdir -p iOS/libs/arm64
+	-$(MAKE) -C outside/sigsegv distclean
+	cd outside/sigsegv ; ./autogen.sh ; ./configure CC=clang CFLAGS="$(CFLAGS_arm64)" --host=arm-apple-darwin15.0.0
+	$(MAKE) -C outside/sigsegv CFLAGS="$(CFLAGS_arm64)"
+	cp $(LIBSIGSEGV) $@
+
+$(LIBSIGSEGV_x86_64):
+	-mkdir -p iOS/libs/x86_64
+	-$(MAKE) -C outside/sigsegv distclean
+	cd outside/sigsegv ; ./autogen.sh ; ./configure CC=clang CFLAGS="$(CFLAGS_x86_64)"
+	$(MAKE) -C outside/sigsegv CFLAGS="$(CFLAGS_x86_64)"
+	cp $(LIBSIGSEGV) $@
+
+ios-libs: $(IOS_LIBS)
+
+.PHONY: ios-libs
