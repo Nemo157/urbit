@@ -1,0 +1,3 @@
+[submodule "outside/sigsegv"]
+	path = outside/sigsegv
+	url = https://github.com/Nemo157/libsigsegv
