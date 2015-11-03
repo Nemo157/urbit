@@ -40,8 +40,8 @@ DELETE = rm -f
 C_INCLUDES = -I. -I$(SOURCE_DIR)/$(SPECIALIZE_TYPE) -I$(SOURCE_DIR)/include
 COMPILE_C = \
   $(CC) -c -std=gnu89 -Werror-implicit-function-declaration $(SOFTFLOAT_OPTS) \
-    -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk \
-    -fembed-bitcode -arch arm64 \
+    -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk \
+    -fembed-bitcode \
     $(C_INCLUDES) -O2 -o $@
 MAKELIB = ar crs $@
 
